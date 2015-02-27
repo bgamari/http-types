@@ -167,10 +167,29 @@ parseSimpleQuery = map (second $ fromMaybe B.empty) . parseQuery
 
 ord8 :: Char -> Word8
 ord8 = fromIntegral . ord
+{-# INLINE ord8 #-}
 
 unreservedQS, unreservedPI :: [Word8]
 unreservedQS = map ord8 "-_.~"
 unreservedPI = map ord8 "-_.~:@&=+$,"
+{-# INLINE unreservedQS #-}
+{-# INLINE unreservedPI #-}
+
+unreservedPI' :: Word8 -> Bool
+unreservedPI' c' =
+       c == '-'
+    || c == '_'
+    || c == '.'
+    || c == '~'
+    || c == ':'
+    || c == '@'
+    || c == '&'
+    || c == '='
+    || c == '+'
+    || c == '$'
+    || c == ','
+  where c = chr $ fromIntegral c'
+{-# INLINE unreservedPI' #-}
 
 -- | Percent-encoding for URLs.
 urlEncodeBuilder' :: [Word8] -> B.ByteString -> BSB.Builder
@@ -182,11 +201,14 @@ urlEncodeBuilder' extraUnreserved = mconcat . map encodeChar . B.unpack
       unreserved ch | ch >= 65 && ch <= 90  = True -- A-Z
                     | ch >= 97 && ch <= 122 = True -- a-z
                     | ch >= 48 && ch <= 57  = True -- 0-9
-      unreserved c = c `elem` extraUnreserved
+      --unreserved ch = ch `elem` extraUnreserved
+      unreserved ch = unreservedPI' ch
       
-      h2 v = let (a, b) = v `divMod` 16 in foldMap BSB.word8 [37, h a, h b] -- percent (%)
+      --h2 v = let (a, b) = v `divMod` 16 in foldMap BSB.word8 [37, h a, h b] -- percent (%)
+      h2 v = let (a, b) = v `divMod` 16 in BSB.word8 37 <> BSB.word8 (h a) <> BSB.word8 (h b)
       h i | i < 10    = 48 + i -- zero (0)
           | otherwise = 65 + i - 10 -- 65: A
+{-# INLINE urlEncodeBuilder' #-}
 
 -- | Percent-encoding for URLs (using 'BSB.Builder').
 urlEncodeBuilder
@@ -195,6 +217,7 @@ urlEncodeBuilder
     -> BSB.Builder
 urlEncodeBuilder True  = urlEncodeBuilder' unreservedQS
 urlEncodeBuilder False = urlEncodeBuilder' unreservedPI
+{-# INLINE urlEncodeBuilder #-}
 
 -- | Percent-encoding for URLs.
 urlEncode :: Bool -- ^ Whether to decode '+' to ' '
