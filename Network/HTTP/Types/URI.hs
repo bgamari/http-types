@@ -176,19 +176,18 @@ unreservedPI = map ord8 "-_.~:@&=+$,"
 {-# INLINE unreservedPI #-}
 
 unreservedPI' :: Word8 -> Bool
-unreservedPI' c' =
-       c == '-'
-    || c == '_'
-    || c == '.'
-    || c == '~'
-    || c == ':'
-    || c == '@'
-    || c == '&'
-    || c == '='
-    || c == '+'
-    || c == '$'
-    || c == ','
-  where c = chr $ fromIntegral c'
+unreservedPI' c =
+       c == ord8 '-'
+    || c == ord8 '_'
+    || c == ord8 '.'
+    || c == ord8 '~'
+    || c == ord8 ':'
+    || c == ord8 '@'
+    || c == ord8 '&'
+    || c == ord8 '='
+    || c == ord8 '+'
+    || c == ord8 '$'
+    || c == ord8 ','
 {-# INLINE unreservedPI' #-}
 
 -- | Percent-encoding for URLs.
